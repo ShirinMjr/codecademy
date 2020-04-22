@@ -1,0 +1,215 @@
+/*
+Project
+Optional: RPA Fraud Detection
+*/
+SELECT *
+FROM transaction_data
+LIMIT 10;
+
+select full_name, email
+from transaction_data
+where zip = 20252;
+
+select * from transaction_data
+where full_name = 'Art Vandelay' OR
+full_name like '%der%';
+
+select ip_address, email
+from transaction_data
+where ip_address like '%10.%';
+
+select email
+from transaction_data
+where email like '%@temp_email.com';
+
+select * from transaction_data
+where ip_address like '120.%' and
+full_name like 'john%';
+
+/*
+ * ==============================
+ */
+
+select count(email) from users
+where email like '%.com';
+
+select first_name, count(*) as 'count'
+from users
+group by first_name
+order by count DESC;
+
+SELECT
+  ROUND(watch_duration_in_minutes,0) as duration,
+  COUNT(*) as count
+FROM watch_history
+GROUP BY duration
+ORDER BY duration ASC;
+
+select user_id as users,
+sum(amount) as sum
+from payments
+where status = 'paid'
+group by user_id
+order by sum(amount) desc;
+
+select user_id , sum(watch_duration_in_minutes) as duration 
+from watch_history
+group by user_id
+having duration > 400;
+
+select 
+round(sum(watch_duration_in_minutes),0) as total from watch_history;
+
+select pay_date,
+sum(amount) as amount
+from payments
+where status = 'paid'
+Group by pay_date
+order by amount desc;
+
+/*
+ * =============Unit3, Code Challenge ===============
+ */
+
+select premium_users.user_id, plans.description
+from plans
+join premium_users
+on premium_users.membership_plan_id = plans.id;
+
+
+ SELECT 
+ plays.user_id, plays.play_date,
+ songs.title
+ FROM plays
+ join songs
+ on songs.id = plays.song_id;
+
+ SELECT users.id
+ FROM users
+ LEFT Join premium_users
+ on users.id = premium_users.user_id
+ WHERE premium_users.user_id IS NULL;	
+
+/*
+ * --------------WITH------------------------
+ */
+
+WITH january AS (
+  SELECT *
+  FROM plays
+  WHERE strftime("%m", play_date) = '01'
+),
+february AS (
+  SELECT *
+  FROM plays
+  WHERE strftime("%m", play_date) = '02'
+
+)
+SELECT january.user_id,february.user_id
+from january
+LEFT join february
+on january.user_id = february.user_id
+WHERE february.user_id IS NULL;
+
+SELECT premium_users.user_id,
+ 	premium_users.purchase_date,
+  premium_users.cancel_date,
+  months.months
+FROM premium_users
+CROSS JOIN months;
+
+/*
+ * --------------------------------------
+ */
+
+This will tell us if a particular user is 'active' or 'not_active' each month.
+
+SELECT 
+premium_users.user_id,months.months,
+CASE
+	WHEN (
+        premium_users.purchase_date <= months.months
+      )
+  AND
+      (
+        premium_users.cancel_date >= months.months
+        OR
+        premium_users.cancel_date IS NULL
+      )
+   THEN 'active'
+   ELSE 'not_active'
+  END AS 'status'
+FROM premium_users
+CROSS JOIN months;
+
+SELECT *
+FROM songs
+UNION
+SELECT *
+FROM bonus_songs;
+
+SELECT *
+FROM songs
+UNION
+SELECT *
+FROM bonus_songs;
+
+/*
+ * Besides stacking one table on top of another, 
+ * we can also use UNION to quickly make a "mini" dataset:
+ *
+*/
+
+SELECT '2017-01-01' as month
+UNION
+SELECT '2017-02-01' as month
+UNION
+SELECT '2017-03-01' as month;
+
+The following query will give us the number of times that each song was played:
+
+WITH play_count AS(
+  SELECT song_id,
+   COUNT(*) AS 'times_played'
+FROM plays
+GROUP BY song_id)
+  
+  SELECT songs.title, songs.artist,
+  play_count.times_played
+  FROM play_count
+  Join songs
+  on play_count.song_id = songs.id;
+/*
+ * =============UNIT-4===============
+ */
+Count the number of distinct user_id who answered each question_text.
+
+ SELECT question_text,count(DISTINCT user_id) 
+ FROM survey_responses
+ GROUP BY question_text;
+
+Using GROUP BY, count the number of distinct user_id's for each value of modal_text. This will tell us the number of users completing each step of the funnel.
+
+This time, sort modal_text so that your funnel is in order.
+
+ SELECT modal_text,COUNT(DISTINCT user_id)
+ FROM onboarding_modals
+ GROUP BY 1
+ ORDER BY 1;
+
+We can use a CASE statement within our COUNT() aggregate so that we only count user_ids whose ab_group is equal to 'control':
+Add an additional column to your previous query that counts the number of clicks from the variant group and alias it as 'variant_clicks'
+
+SELECT modal_text,
+  COUNT(DISTINCT CASE
+    WHEN ab_group = 'control' THEN user_id
+    END) as control_clicks,
+  COUNT(DISTINCT CASE
+    WHEN ab_group = 'variant' THEN user_id
+    END) as variant_clicks
+FROM onboarding_modals
+GROUP BY modal_text
+ORDER BY modal_text;
+
+
+
